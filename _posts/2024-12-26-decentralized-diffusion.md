@@ -5,7 +5,7 @@ description: Train diffusion models across many GPU clusters without networking 
 tags: distill formatting
 giscus_comments: false
 date: 2025-01-09
-permalink: /
+permalink: /decentralized-diffusion
 featured: true
 
 # Add this line to set a custom accent color
