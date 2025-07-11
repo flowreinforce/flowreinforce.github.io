@@ -2,7 +2,7 @@
 # Site settings
 # -----------------------------------------------------------------------------
 
-title: Decentralized Diffusion # the website title (if blank, full name will be used instead)
+title: Flow Matching Policy Gradients # the website title (if blank, full name will be used instead)
 first_name: David
 middle_name: 
 last_name: McAllister
@@ -13,11 +13,11 @@ description: > # the ">" symbol means to ignore newlines until "footer_text:"
 footer_text: >
   Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
   Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
-keywords: decentralized diffusion, diffusion models, decentralized, federated learning, image generation # add your own keywords or leave empty
+keywords: Flow Matching Policy Gradients, flow matching, diffusion models, reinforcement learning, PPO # add your own keywords or leave empty
 lang: en # the language of your site (for example: en, fr, cn, ru, etc.)
 icon: ⚛️ # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
 
-url: https://decentralizeddiffusion.github.io # the base hostname & protocol for your site
+url: https://flowreinforce.github.io # the base hostname & protocol for your site
 baseurl: # the subpath of your site, e.g. /blog/. Leave blank for root
 last_updated: false # set to true if you want to display last updated in the footer
 impressum_path: # set to path to include impressum link in the footer, use the same path as permalink in a page, helps to conform with EU GDPR
@@ -86,7 +86,7 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # Blog
 # -----------------------------------------------------------------------------
 
-blog_name: Decentralized Diffusion Models # blog_name will be displayed in your blog page
+blog_name: Flow Matching Policy Gradients # blog_name will be displayed in your blog page
 blog_description: a simple whitespace theme for academics
 permalink: /blog/:year/:title/
 lsi: false # produce an index for related posts
