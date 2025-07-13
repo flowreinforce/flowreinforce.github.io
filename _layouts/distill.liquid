@@ -79,7 +79,7 @@
 
   <body class="{% if site.navbar_fixed %}fixed-top-nav{% endif %} {% unless site.footer_fixed %}sticky-bottom-footer{% endunless %}">
     <!-- Header -->
-    {% unless page.permalink != '/' and page.layout == 'distill' %}
+    {% unless page.layout == 'distill' %}
       {% include header.liquid %}
     {% endunless %}
 
