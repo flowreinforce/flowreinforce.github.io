@@ -147,16 +147,62 @@
             font-size: 14px;
         }
         
-        /* Responsive design for smaller screens */
+        /* Mobile-specific CSS */
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            #visualization-container {
+                height: 200px; /* Optimized mobile height */
+            }
+            
+            .heatmap-wrapper {
+                height: 200px; /* Match container height */
+                margin-bottom: 15px; /* Reduce spacing */
+            }
+            
             .sliders-wrapper {
                 flex-direction: column;
                 align-items: center;
-                gap: 20px;
+                gap: 15px; /* Tighter spacing */
+                margin: 15px auto; /* Less margin */
             }
             
             .slider-container.side-by-side {
-                width: 300px;
+                width: 280px; /* Smaller width */
+            }
+            
+            .info-text {
+                font-size: 11px;
+                padding: 0 5px;
+                margin-top: 8px; /* Less margin */
+            }
+            
+            /* Touch-friendly sliders */
+            .slider {
+                height: 8px;
+            }
+            
+            .slider::-webkit-slider-thumb {
+                width: 25px;
+                height: 25px;
+            }
+            
+            .slider::-moz-range-thumb {
+                width: 25px;
+                height: 25px;
+            }
+        }
+        
+        /* Desktop optimization */
+        @media (min-width: 769px) {
+            #visualization-container {
+                height: 380px; /* Taller on desktop to fill space */
+            }
+            
+            .heatmap-wrapper {
+                height: 380px;
             }
         }
     </style>
@@ -192,6 +238,9 @@
     </div>
 
     <script>
+        // Mobile detection
+        const isMobile = window.innerWidth <= 768;
+        
         // Parameters
         const xMin = -1.7;
         const xMax = 1.7;
@@ -245,8 +294,8 @@
         let dragStartMean = 0;
         
         // Control point rendering parameters
-        const controlPointRadius = 8;
-        const controlPointHoverRadius = 10;
+        const controlPointRadius = isMobile ? 12 : 8; // Larger on mobile for touch
+        const controlPointHoverRadius = isMobile ? 16 : 10;
         let hoveredModeIndex = -1;
         
         // Particle system
@@ -509,6 +558,52 @@
             canvas.addEventListener('mousemove', handleMouseMove);
             canvas.addEventListener('mouseup', handleMouseUp);
             canvas.addEventListener('mouseleave', handleMouseUp);
+            
+            // Add touch event listeners for mobile
+            if (isMobile) {
+                canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
+                canvas.addEventListener('touchmove', handleTouchMove, {passive: false});
+                canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
+            }
+        }
+        
+        // Touch event handlers for mobile
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = touch.clientX - rect.left;
+            const mouseY = touch.clientY - rect.top;
+            
+            const modeIndex = getControlPointAtPosition(mouseX, mouseY);
+            if (modeIndex >= 0) {
+                isDragging = true;
+                draggedModeIndex = modeIndex;
+                dragStartX = mouseX;
+                dragStartY = mouseY;
+                dragStartWeight = customDataModes[currentDataType][modeIndex].weight;
+                dragStartMean = customDataModes[currentDataType][modeIndex].mean;
+                canvas.classList.add('dragging');
+            }
+        }
+        
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if (isDragging && e.touches.length > 0) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = touch.clientX - rect.left;
+                const mouseY = touch.clientY - rect.top;
+                
+                updateDraggedMode(mouseX, mouseY);
+            }
+        }
+        
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            if (isDragging) {
+                completeDrag();
+            }
         }
         
         // Update canvas size to match plot
@@ -538,8 +633,6 @@
             const layout = plotDiv._fullLayout;
             const xaxis = layout.xaxis;
             const yaxis = layout.yaxis;
-            const xaxis3 = layout.xaxis3; // Data distribution x-axis
-            const yaxis3 = layout.yaxis3; // Data distribution y-axis
             
             // Main plot coordinate mapping
             coordinateMapping = {
@@ -554,6 +647,8 @@
             };
             
             // Data distribution plot coordinate mapping
+            const xaxis3 = layout.xaxis3;
+            const yaxis3 = layout.yaxis3;
             if (xaxis3 && yaxis3) {
                 dataDistCoordinateMapping = {
                     xMin: xaxis3.range[0],
@@ -618,7 +713,7 @@
             return {t: t, x: x};
         }
         
-        // Get control point position for a mode - FIXED to use data distribution plot
+        // Get control point position for a mode
         function getControlPointPosition(mode) {
             // Calculate the position on the data distribution curve
             // We need to find where the peak of this Gaussian appears on the right plot
@@ -638,12 +733,60 @@
             const modes = getDataModes(currentDataType);
             for (let i = 0; i < modes.length; i++) {
                 const pos = getControlPointPosition(modes[i]);
+                if (!pos) continue;
                 const dist = Math.sqrt(Math.pow(mouseX - pos.x, 2) + Math.pow(mouseY - pos.y, 2));
                 if (dist <= controlPointHoverRadius) {
                     return i;
                 }
             }
             return -1;
+        }
+        
+        // Update dragged mode (shared between mouse and touch)
+        function updateDraggedMode(mouseX, mouseY) {
+            if (!isDragging || draggedModeIndex < 0) return;
+            
+            const modes = customDataModes[currentDataType];
+            
+            // Update mean based on vertical movement
+            const deltaY = mouseY - dragStartY;
+            const meanChange = -deltaY * 0.005; // Scale factor for mean changes
+            modes[draggedModeIndex].mean = Math.max(xMin + 0.2, Math.min(xMax - 0.2, dragStartMean + meanChange));
+            
+            // Update weight based on horizontal movement
+            const deltaX = mouseX - dragStartX;
+            const weightChange = deltaX * 0.005; // Scale factor for weight changes
+            
+            let newWeight = Math.max(0.05, dragStartWeight + weightChange);
+            modes[draggedModeIndex].weight = newWeight;
+            
+            // Calculate total weight
+            const totalWeight = modes.reduce((sum, mode) => sum + mode.weight, 0);
+            
+            // Only normalize if total weight is significantly different from 1.0
+            if (Math.abs(totalWeight - 1.0) > 0.01) {
+                modes.forEach(mode => mode.weight /= totalWeight);
+            }
+            
+            // Update the plot
+            plotFlow();
+        }
+        
+        // Complete drag operation (shared between mouse and touch)
+        function completeDrag() {
+            if (!isDragging) return;
+            
+            // Final normalization to ensure weights sum to exactly 1.0
+            const modes = customDataModes[currentDataType];
+            const totalWeight = modes.reduce((sum, mode) => sum + mode.weight, 0);
+            modes.forEach(mode => mode.weight /= totalWeight);
+            
+            isDragging = false;
+            draggedModeIndex = -1;
+            canvas.classList.remove('dragging');
+            
+            // Update plot one final time with normalized weights
+            plotFlow();
         }
         
         // Mouse event handlers
@@ -671,33 +814,7 @@
             const mouseY = e.clientY - rect.top;
             
             if (isDragging && draggedModeIndex >= 0) {
-                const modes = customDataModes[currentDataType];
-                
-                // Update mean based on vertical movement
-                const deltaY = mouseY - dragStartY;
-                const meanChange = -deltaY * 0.005; // Scale factor for mean changes
-                modes[draggedModeIndex].mean = Math.max(xMin + 0.2, Math.min(xMax - 0.2, dragStartMean + meanChange));
-                
-                // Update weight based on horizontal movement
-                const deltaX = mouseX - dragStartX;
-                const weightChange = deltaX * 0.005; // Scale factor for weight changes
-                
-                // For weight changes, we use a different strategy:
-                // - Allow weights to go beyond 1.0 temporarily
-                // - Then normalize all weights proportionally
-                let newWeight = Math.max(0.05, dragStartWeight + weightChange);
-                modes[draggedModeIndex].weight = newWeight;
-                
-                // Calculate total weight
-                const totalWeight = modes.reduce((sum, mode) => sum + mode.weight, 0);
-                
-                // Only normalize if total weight is significantly different from 1.0
-                if (Math.abs(totalWeight - 1.0) > 0.01) {
-                    modes.forEach(mode => mode.weight /= totalWeight);
-                }
-                
-                // Update the plot
-                plotFlow();
+                updateDraggedMode(mouseX, mouseY);
             } else {
                 // Check for hover
                 const newHoveredIndex = getControlPointAtPosition(mouseX, mouseY);
@@ -711,33 +828,25 @@
         
         function handleMouseUp(e) {
             if (isDragging) {
-                // Final normalization to ensure weights sum to exactly 1.0
-                const modes = customDataModes[currentDataType];
-                const totalWeight = modes.reduce((sum, mode) => sum + mode.weight, 0);
-                modes.forEach(mode => mode.weight /= totalWeight);
-                
-                isDragging = false;
-                draggedModeIndex = -1;
-                canvas.classList.remove('dragging');
-                
-                // Update plot one final time with normalized weights
-                plotFlow();
+                completeDrag();
             }
         }
         
         // Render control points
         function renderControlPoints() {
-            if (!ctx || !coordinateMapping || !dataDistCoordinateMapping) return;
+            if (!ctx || !coordinateMapping) return;
             
             const modes = getDataModes(currentDataType);
             
             // Find the maximum weight for scaling the weight indicators
             const maxWeight = Math.max(...modes.map(m => m.weight));
-            const weightScale = 60; // Maximum length of weight indicator in pixels
+            const weightScale = isMobile ? 40 : 60; // Shorter weight indicators on mobile
             
             // Draw control points
             modes.forEach((mode, index) => {
                 const pos = getControlPointPosition(mode);
+                if (!pos) return;
+                
                 const radius = (index === hoveredModeIndex || index === draggedModeIndex) ? 
                               controlPointHoverRadius : controlPointRadius;
                 
@@ -748,7 +857,6 @@
                 ctx.shadowOffsetY = 2;
 
                 // Draw weight indicator (horizontal line from control point)
-                // Scale relative to the maximum weight to use full range
                 const weightLength = (mode.weight / maxWeight) * weightScale;
                 ctx.strokeStyle = 'white';
                 ctx.lineWidth = 3;
@@ -776,10 +884,8 @@
                 
                 // Draw label
                 ctx.fillStyle = '#333';
-                ctx.font = '12px Arial';
+                ctx.font = isMobile ? 'bold 10px Arial' : 'bold 12px Arial';
                 ctx.textAlign = 'left';
-                // ctx.fillText(`μ=${mode.mean.toFixed(2)}`, pos.x + 15, pos.y - 5);
-                ctx.font = 'bold 12px Arial';
                 ctx.fillText(`${mode.weight.toFixed(1)}`, pos.x + 15, pos.y + 4);
             });
         }
@@ -843,19 +949,12 @@
         function plotFlow() {
             const densityMatrix = createDensityMatrix(currentDataType);
             
-            // Create custom colorscale that interpolates between red and blue
-            const customColorscale = [
-                [0, '#FFFFFF'],    // White for low values
-                [1, '#4994EC']     // Blue for high values
-            ];
-            
             // Create heatmap trace
             const heatmapTrace = {
                 x: tGrid,
                 y: xGrid,
                 z: densityMatrix,
                 type: 'heatmap',
-                // colorscale: customColorscale,
                 colorscale: "Portland",
                 showscale: false,
                 hoverinfo: 'none',
@@ -880,9 +979,9 @@
                     dash: 'dash'
                 },
                 marker: {
-                    color: priorY, // Use y-values to drive colorscale
+                    color: priorY,
                     colorscale: 'Portland',
-                    size: 0 // Hide markers, just use for colorscale
+                    size: 0
                 },
                 fill: 'tozerox',
                 fillcolor: '#18327E',
@@ -902,12 +1001,11 @@
                     dash: 'dash'
                 },
                 marker: {
-                    color: dataY, // Use y-values to drive colorscale
+                    color: dataY,
                     colorscale: 'Portland',
-                    size: 0 // Hide markers, just use for colorscale
+                    size: 0
                 },
                 fill: 'tozerox',
-                // fillcolor: 'rgba(68, 1, 84, 0.3)', // Viridis purple with transparency
                 fillcolor: '#18327E',
                 name: 'Data p_0(x)',
                 xaxis: 'x3',
@@ -917,82 +1015,160 @@
 
             const data = [heatmapTrace, priorTrace, dataTrace];
             
-            const layout = {
-                // title: {
-                //     text: 'Flow from Noise to Data Distribution',
-                //     font: {size: 20, family: 'Helvetica Neue', weight: 'bold'}
-                // },
-                hovermode: false,
-                xaxis: {
-                    title: {
-                        text: 'Timestep (t)',
-                        font: {weight: 'bold'}
+            // Mobile vs Desktop layout - adjust proportions for mobile
+            let layout;
+            
+            if (isMobile) {
+                // Mobile layout - three panel but with tighter proportions
+                layout = {
+                    hovermode: false,
+                    xaxis: {
+                        title: {
+                            text: 'Timestep (t)',
+                            font: {size: 12, weight: 'bold'}
+                        },
+                        domain: [0.25, 0.75], // Narrower main plot on mobile
+                        range: [0, 1],
+                        zeroline: false,
                     },
-                    domain: [0.2, 0.8],
-                    range: [0, 1],
-                    zeroline: false,
-                },
-                yaxis: {
-                    range: [xMin, xMax],
-                    showticklabels: false,
-                    ticks: '',
-                    zeroline: false,
-                },
-                xaxis2: {
-                    domain: [0, 0.15],
-                    showticklabels: false,
-                    showgrid: false,
-                    zeroline: false,
-                    range: [-scale, 0]
-                },
-                yaxis2: {
-                    anchor: 'x2',
-                    showticklabels: false,
-                    zeroline: false,
-                    showgrid: false,
-                    range: [xMinExtended, xMaxExtended]
-                },
-                xaxis3: {
-                    domain: [0.85, 1],
-                    showticklabels: false,
-                    showgrid: false,
-                    zeroline: false,
-                    range: [1, 1 + scale]
-                },
-                yaxis3: {
-                    anchor: 'x3',
-                    showticklabels: false,
-                    showgrid: false,
-                    zeroline: false,
-                    range: [xMinExtended, xMaxExtended]
-                },
-                annotations: [
-                    {
-                        text: 'Prior',
-                        x: 0.075,
-                        y: 1.05,
-                        xref: 'paper',
-                        yref: 'paper',
-                        showarrow: false,
-                        font: {size: 20, color: '#18327E', weight: 'bold'}
+                    yaxis: {
+                        range: [xMin, xMax],
+                        showticklabels: false,
+                        ticks: '',
+                        zeroline: false,
                     },
-                    {
-                        text: 'Data',
-                        x: 0.925,
-                        y: 1.05,
-                        xref: 'paper',
-                        yref: 'paper',
-                        showarrow: false,
-                        font: {size: 20, color: '#18327E', weight: 'bold'}
-                    }
-                ],
-                showlegend: false,
-                // margin: {t: 20},
-                margin: {t: 20, l: 40, r: 40, b: 40},
-            };
+                    xaxis2: {
+                        domain: [0, 0.2], // Slightly wider prior plot
+                        showticklabels: false,
+                        showgrid: false,
+                        zeroline: false,
+                        range: [-scale, 0]
+                    },
+                    yaxis2: {
+                        anchor: 'x2',
+                        showticklabels: false,
+                        zeroline: false,
+                        showgrid: false,
+                        range: [xMinExtended, xMaxExtended]
+                    },
+                    xaxis3: {
+                        domain: [0.8, 1], // Slightly wider data plot
+                        showticklabels: false,
+                        showgrid: false,
+                        zeroline: false,
+                        range: [1, 1 + scale]
+                    },
+                    yaxis3: {
+                        anchor: 'x3',
+                        showticklabels: false,
+                        showgrid: false,
+                        zeroline: false,
+                        range: [xMinExtended, xMaxExtended]
+                    },
+                    annotations: [
+                        {
+                            text: 'Prior',
+                            x: 0.1,
+                            y: 1.05,
+                            xref: 'paper',
+                            yref: 'paper',
+                            showarrow: false,
+                            font: {size: 14, color: '#18327E', weight: 'bold'}
+                        },
+                        {
+                            text: 'Data',
+                            x: 0.9,
+                            y: 1.05,
+                            xref: 'paper',
+                            yref: 'paper',
+                            showarrow: false,
+                            font: {size: 14, color: '#18327E', weight: 'bold'}
+                        }
+                    ],
+                    showlegend: false,
+                    margin: {t: 15, l: 20, r: 20, b: 30},
+                    font: {size: 10},
+                };
+            } else {
+                // Desktop layout - original proportions
+                layout = {
+                    hovermode: false,
+                    xaxis: {
+                        title: {
+                            text: 'Timestep (t)',
+                            font: {weight: 'bold'}
+                        },
+                        domain: [0.2, 0.8],
+                        range: [0, 1],
+                        zeroline: false,
+                    },
+                    yaxis: {
+                        range: [xMin, xMax],
+                        showticklabels: false,
+                        ticks: '',
+                        zeroline: false,
+                    },
+                    xaxis2: {
+                        domain: [0, 0.15],
+                        showticklabels: false,
+                        showgrid: false,
+                        zeroline: false,
+                        range: [-scale, 0]
+                    },
+                    yaxis2: {
+                        anchor: 'x2',
+                        showticklabels: false,
+                        zeroline: false,
+                        showgrid: false,
+                        range: [xMinExtended, xMaxExtended]
+                    },
+                    xaxis3: {
+                        domain: [0.85, 1],
+                        showticklabels: false,
+                        showgrid: false,
+                        zeroline: false,
+                        range: [1, 1 + scale]
+                    },
+                    yaxis3: {
+                        anchor: 'x3',
+                        showticklabels: false,
+                        showgrid: false,
+                        zeroline: false,
+                        range: [xMinExtended, xMaxExtended]
+                    },
+                    annotations: [
+                        {
+                            text: 'Prior',
+                            x: 0.075,
+                            y: 1.05,
+                            xref: 'paper',
+                            yref: 'paper',
+                            showarrow: false,
+                            font: {size: 20, color: '#18327E', weight: 'bold'}
+                        },
+                        {
+                            text: 'Data',
+                            x: 0.925,
+                            y: 1.05,
+                            xref: 'paper',
+                            yref: 'paper',
+                            showarrow: false,
+                            font: {size: 20, color: '#18327E', weight: 'bold'}
+                        }
+                    ],
+                    showlegend: false,
+                    margin: {t: 20, l: 40, r: 40, b: 40},
+                };
+            }
             
             const config = {
-                responsive: true
+                responsive: true,
+                displayModeBar: false,
+                doubleClick: 'reset',
+                showTips: false,
+                scrollZoom: false,
+                staticPlot: false,
+                editable: false
             };
             
             Plotly.newPlot('plot-container', data, layout, config).then(() => {
