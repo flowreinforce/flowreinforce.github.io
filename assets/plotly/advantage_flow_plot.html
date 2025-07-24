@@ -169,6 +169,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
         }
         
         .top-buttons button:hover:not(:disabled) {
@@ -236,6 +237,15 @@
                 font-size: 16px;
             }
             
+            /* Adjust arrow positioning for mobile */
+            .top-buttons button:nth-child(1)::after,
+            .top-buttons button:nth-child(2)::after {
+                right: -12px;
+                border-left-width: 5px;
+                border-top-width: 3px;
+                border-bottom-width: 3px;
+            }
+            
             .reset-button {
                 width: 42px !important;
                 height: 42px !important;
@@ -299,6 +309,44 @@
         
         .reset-button:active .reset-icon {
             transform: rotate(-30deg);
+        }
+        
+        /* Arrow between buttons 1 and 2 */
+        .top-buttons button:nth-child(1)::after {
+            content: '';
+            position: absolute;
+            right: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid #18327E;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        /* Arrow between buttons 2 and 3 */
+        .top-buttons button:nth-child(2)::after {
+            content: '';
+            position: absolute;
+            right: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid #18327E;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        /* Update arrow colors when button is active */
+        .top-buttons button.active:nth-child(1)::after,
+        .top-buttons button.active:nth-child(2)::after {
+            border-left-color: #C8372C;
         }
     </style>
 </head>
@@ -1922,7 +1970,8 @@
                 xaxis: {
                     title: {
                         text: 'Timestep (t)',
-                        font: {weight: 'bold'}
+                        font: {weight: 'bold'},
+                        standoff: 20  // Add space between title and axis
                     },
                     domain: [0.1, 0.65],
                     range: [0, 1],
@@ -1972,22 +2021,23 @@
                         showarrow: false,
                         font: {size: 20, color: '#18327E', weight: 'bold'}
                     },
-                    {
-                        text: 'Reward',
-                        x: 0.87,
-                        y: 1.15,
-                        xref: 'paper',
-                        yref: 'paper',
-                        showarrow: false,
-                        font: {size: 20, color: '#C8372C', weight: 'bold'}
-                    }
+                    // {
+                    //     text: 'Reward',
+                    //     x: 0.87,
+                    //     y: 1.15,
+                    //     xref: 'paper',
+                    //     yref: 'paper',
+                    //     showarrow: false,
+                    //     font: {size: 20, color: '#C8372C', weight: 'bold'}
+                    // }
                 ],
                 showlegend: false,
-                margin: {t: 20, l: 40, r: 40, b: 20},
+                margin: {t: 20, l: 40, r: 40, b: 60},  // Increased bottom margin from 20 to 60
             };
             
             const config = {
-                responsive: true
+                responsive: true,
+                displayModeBar: false
             };
             
             // Use Plotly.react for faster updates during animation
