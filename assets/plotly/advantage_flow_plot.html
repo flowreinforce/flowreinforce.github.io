@@ -23,7 +23,6 @@
             height: 100%;
             background-color: white;
             border-radius: 10px;
-            /* box-shadow: 0 2px 10px rgba(0,0,0,0.1); */
             box-shadow: none;
         }
         #particle-canvas {
@@ -75,7 +74,6 @@
             border-radius: 20px;
             position: relative;
             background-color: white;
-            /* box-shadow: 0 2px 10px rgba(0,0,0,0.1); */
             box-shadow: none;
         }
         #plot-container {
@@ -151,21 +149,26 @@
         .top-buttons {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 10px;
         }
         
         .top-buttons button {
-            padding: 12px 24px;
-            font-size: 16px;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            font-size: 14px;
             font-weight: bold;
             background-color: #18327E;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
-            opacity: 1.0; /* Changed from 0.6 to 1.0 for normal contrast */
+            opacity: 1.0;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .top-buttons button:hover:not(:disabled) {
@@ -175,19 +178,18 @@
         
         .top-buttons button.active {
             opacity: 1;
-            background-color: #C8372C; /* Changed from #f48a3f to #C8372C */
-            /* Removed box-shadow line to eliminate shadows */
+            background-color: #C8372C;
         }
         
         .top-buttons button:disabled {
             cursor: not-allowed;
-            opacity: 1.0; /* Changed from 0.4 to 1.0 for normal contrast */
+            opacity: 1.0;
         }
         
         /* Reset button styling */
         .reset-button {
-            width: 50px !important;
-            height: 50px !important;
+            width: 36px !important;
+            height: 36px !important;
             border-radius: 8px !important;
             padding: 0 !important;
             background-color: #F1A948 !important;
@@ -208,62 +210,80 @@
             background-color: #666 !important;
         }
         
-        /* Responsive design for reset button */
+        /* Mobile-specific CSS */
         @media (max-width: 768px) {
-            .reset-button {
-                width: 50px !important;
-                height: 50px !important;
-                margin-left: 10px !important;
+            body {
+                padding: 10px;
             }
-        }
-        
-        /* Responsive design for top buttons */
-        @media (max-width: 768px) {
+            
+            #visualization-container {
+                height: 250px; /* Optimized mobile height */
+            }
+            
+            .heatmap-wrapper {
+                height: 250px; /* Match container height */
+                margin-bottom: 15px; /* Reduce spacing */
+            }
+            
             .top-buttons {
-                flex-direction: column;
-                align-items: center;
-                gap: 10px;
+                gap: 8px;
+                margin-bottom: 8px;
             }
             
             .top-buttons button {
-                width: 200px;
+                width: 42px; /* Slightly larger for touch */
+                height: 42px;
+                font-size: 16px;
             }
-        }
-        
-        /* Responsive design for smaller screens */
-        @media (max-width: 768px) {
+            
+            .reset-button {
+                width: 42px !important;
+                height: 42px !important;
+                margin-left: 10px !important;
+            }
+            
             .sliders-wrapper {
                 flex-direction: column;
                 align-items: center;
-                gap: 20px;
+                gap: 15px; /* Tighter spacing */
+                margin: 15px auto; /* Less margin */
             }
             
             .slider-container.side-by-side {
-                width: 300px;
+                width: 280px; /* Smaller width */
+            }
+            
+            .info-text {
+                font-size: 12px;
+                padding: 0 5px;
+                margin-top: 8px; /* Less margin */
+            }
+            
+            /* Touch-friendly sliders */
+            .slider {
+                height: 8px;
+            }
+            
+            .slider::-webkit-slider-thumb {
+                width: 25px;
+                height: 25px;
+            }
+            
+            .slider::-moz-range-thumb {
+                width: 25px;
+                height: 25px;
             }
         }
-
-        /* New CSS for the reset button */
-        .reset-button {
-            background-color: #FF9800; /* Orange color for reset */
-            padding: 10px 15px;
-            font-size: 16px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .reset-button:hover {
-            background-color: #F57C00; /* Darker orange on hover */
-        }
-
-        .reset-button:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-            opacity: 0.7;
+        
+        /* Desktop optimization */
+        @media (min-width: 769px) {
+            #visualization-container {
+                height: 380px; /* Taller on desktop to fill space */
+            }
+            
+            .heatmap-wrapper {
+                height: 380px;
+            }
         }
 
         .reset-icon {
@@ -284,9 +304,9 @@
 </head>
 <body>
     <div class="top-buttons">
-        <button id="sampleBtn" onclick="handleStageButton(0)">Sample Actions</button>
-        <button id="advantageBtn" onclick="handleStageButton(1)" disabled>Scale by Advantage</button>
-        <button id="redirectBtn" onclick="handleStageButton(2)" disabled>Redirect the Flow</button>
+        <button id="sampleBtn" onclick="handleStageButton(0)">1</button>
+        <button id="advantageBtn" onclick="handleStageButton(1)" disabled>2</button>
+        <button id="redirectBtn" onclick="handleStageButton(2)" disabled>3</button>
         <button id="resetBtn" class="reset-button" onclick="resetVisualization()" title="Reset visualization">
             <svg class="reset-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4 12C4 7.58172 7.58172 4 12 4C14.5264 4 16.7792 5.17107 18.2454 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -302,16 +322,14 @@
             <canvas id="particle-canvas"></canvas>
         </div>
     </div>
-    <!-- <div class="controls">
-        <button onclick="changeDataDistribution('bimodal')">Bimodal Data</button>
-        <button onclick="changeDataDistribution('trimodal')">Trimodal Data</button>
-        <button class="animation-button" onclick="addMoreParticles(20)">More Particles</button>
-    </div> -->
     <div class="info-text" id="infoText">
         Flow Policy Optimization
     </div>
 
     <script>
+        // Mobile detection
+        const isMobile = window.innerWidth <= 768;
+        
         // Parameters
         const xMin = -1.7;
         const xMax = 1.7;
@@ -386,8 +404,8 @@
         let dragStartMean = 0;
         
         // Control point rendering parameters
-        const controlPointRadius = 8;
-        const controlPointHoverRadius = 10;
+        const controlPointRadius = isMobile ? 12 : 8; // Larger on mobile for touch
+        const controlPointHoverRadius = isMobile ? 16 : 10;
         let hoveredModeIndex = -1;
         
         // Particle system
@@ -1332,6 +1350,13 @@
             canvas.addEventListener('mousemove', handleMouseMove);
             canvas.addEventListener('mouseup', handleMouseUp);
             canvas.addEventListener('mouseleave', handleMouseUp);
+            
+            // Add touch event listeners for mobile
+            if (isMobile) {
+                canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
+                canvas.addEventListener('touchmove', handleTouchMove, {passive: false});
+                canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
+            }
         }
         
         // Update canvas size to match plot
@@ -1557,6 +1582,90 @@
                 // Update plot one final time with normalized weights
                 plotFlow();
             }
+        }
+        
+        // Touch event handlers for mobile
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = touch.clientX - rect.left;
+            const mouseY = touch.clientY - rect.top;
+            
+            const modeIndex = getControlPointAtPosition(mouseX, mouseY);
+            if (modeIndex >= 0) {
+                isDragging = true;
+                draggedModeIndex = modeIndex;
+                dragStartX = mouseX;
+                dragStartY = mouseY;
+                dragStartWeight = advantageModes[modeIndex].weight;
+                dragStartMean = advantageModes[modeIndex].mean;
+                canvas.classList.add('dragging');
+            }
+        }
+        
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if (isDragging && e.touches.length > 0) {
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = touch.clientX - rect.left;
+                const mouseY = touch.clientY - rect.top;
+                
+                updateDraggedMode(mouseX, mouseY);
+            }
+        }
+        
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            if (isDragging) {
+                completeDrag();
+            }
+        }
+        
+        // Update dragged mode (shared between mouse and touch)
+        function updateDraggedMode(mouseX, mouseY) {
+            if (!isDragging || draggedModeIndex < 0) return;
+            
+            // Update mean based on vertical movement
+            const deltaY = mouseY - dragStartY;
+            const meanChange = -deltaY * 0.005; // Scale factor for mean changes
+            advantageModes[draggedModeIndex].mean = Math.max(xMin + 0.2, Math.min(xMax - 0.2, dragStartMean + meanChange));
+            
+            // Update weight based on horizontal movement
+            const deltaX = mouseX - dragStartX;
+            const weightChange = deltaX * 0.005; // Scale factor for weight changes
+            
+            // For weight changes, allow temporary denormalization
+            let newWeight = Math.max(0.05, dragStartWeight + weightChange);
+            advantageModes[draggedModeIndex].weight = newWeight;
+            
+            // Calculate total weight
+            const totalWeight = advantageModes.reduce((sum, mode) => sum + mode.weight, 0);
+            
+            // Only normalize if total weight is significantly different from 1.0
+            if (Math.abs(totalWeight - 1.0) > 0.01) {
+                advantageModes.forEach(mode => mode.weight /= totalWeight);
+            }
+            
+            // Update the plot
+            plotFlow();
+        }
+        
+        // Complete drag operation (shared between mouse and touch)
+        function completeDrag() {
+            if (!isDragging) return;
+            
+            // Final normalization to ensure weights sum to exactly 1.0
+            const totalWeight = advantageModes.reduce((sum, mode) => sum + mode.weight, 0);
+            advantageModes.forEach(mode => mode.weight /= totalWeight);
+            
+            isDragging = false;
+            draggedModeIndex = -1;
+            canvas.classList.remove('dragging');
+            
+            // Update plot one final time with normalized weights
+            plotFlow();
         }
         
         // Render control points
@@ -1874,7 +1983,7 @@
                     }
                 ],
                 showlegend: false,
-                margin: {t: 60, l: 40, r: 40, b: 40},
+                margin: {t: 20, l: 40, r: 40, b: 20},
             };
             
             const config = {
