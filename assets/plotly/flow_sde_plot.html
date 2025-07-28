@@ -606,14 +606,26 @@
             }
         }
         
-        // Update canvas size to match plot
+        // Update canvas size to match plot with high-DPI support
         function updateCanvasSize() {
             const plotDiv = document.getElementById('plot-container');
             if (!plotDiv || !plotDiv._fullLayout) return;
             
             const rect = plotDiv.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+            const dpr = window.devicePixelRatio || 1; // Get device pixel ratio
+            
+            // Set actual canvas size in memory (scaled for high-DPI)
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            
+            // Scale the canvas back down using CSS
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            
+            // Scale the drawing context so everything draws at the correct size
+            ctx.scale(dpr, dpr);
+            
+            // Store logical dimensions for coordinate mapping
             canvasWidth = rect.width;
             canvasHeight = rect.height;
             
