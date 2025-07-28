@@ -1413,8 +1413,17 @@
             if (!plotDiv || !plotDiv._fullLayout) return;
             
             const rect = plotDiv.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
+            const dpr = window.devicePixelRatio || 1; // Get device pixel ratio
+            
+            // Set actual canvas size in memory (scaled for high-DPI)
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+
+            ctx.scale(dpr, dpr);
+
             canvasWidth = rect.width;
             canvasHeight = rect.height;
             
